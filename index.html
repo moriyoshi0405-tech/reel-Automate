@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>📚 読書リール生成ツール</title>
+<title>読書リール生成ツール</title>
 
 <style>
 
@@ -73,17 +73,17 @@ border-radius:16px;
 <label>書影URL</label>
 <input id="image">
 
-<label>記事URL（Notion）</label>
+<label>記事URL</label>
 <input id="article">
 
 <h3>スライド文章</h3>
 
-<textarea id="s1"></textarea>
-<textarea id="s2"></textarea>
-<textarea id="s3"></textarea>
-<textarea id="s4"></textarea>
-<textarea id="s5"></textarea>
-<textarea id="s6"></textarea>
+<textarea class="slide"></textarea>
+<textarea class="slide"></textarea>
+<textarea class="slide"></textarea>
+<textarea class="slide"></textarea>
+<textarea class="slide"></textarea>
+<textarea class="slide"></textarea>
 
 <button onclick="createHTML()">HTML作成</button>
 <button onclick="downloadHTML()">HTMLダウンロード</button>
@@ -107,10 +107,8 @@ alert("Amazon URLを入力してください")
 return
 }
 
-// URLデコード
 const decoded=decodeURIComponent(url)
 
-// スラッグ取得
 let slug=""
 
 try{
@@ -122,29 +120,23 @@ return
 
 const parts=slug.split("-")
 
-// 著者推定
 let author=""
 if(parts.length>=2){
 author=parts.slice(-2).join(" ")
 }
 
-// タイトル推定
 let title=""
 if(parts.length>2){
 title=parts.slice(0,parts.length-2).join(" ")
 }
 
-// ASIN取得
 const asinMatch=url.match(/(?:dp|product)\/([A-Z0-9]{10})/)
 
 let imageURL=""
 
 if(asinMatch){
-
 const asin=asinMatch[1]
-
 imageURL=`https://images-na.ssl-images-amazon.com/images/P/${asin}.jpg`
-
 }
 
 document.getElementById("title").value=title
@@ -163,26 +155,17 @@ const author=document.getElementById("author").value
 const image=document.getElementById("image").value
 const article=document.getElementById("article").value
 
-const slides=[
-document.getElementById("s1").value,
-document.getElementById("s2").value,
-document.getElementById("s3").value,
-document.getElementById("s4").value,
-document.getElementById("s5").value,
-document.getElementById("s6").value
-]
+const slideInputs=document.querySelectorAll(".slide")
 
-let slideCode=""
+let slides=[]
 
-slides.forEach(function(s){
-
-if(s.trim()!=""){
-
-slideCode+=`"<div>${s.replace(/\n/g,"<br>")}</div>",`
-
+slideInputs.forEach(s=>{
+if(s.value.trim()!==""){
+slides.push(`<div>${s.value.replace(/\n/g,"<br>")}</div>`)
 }
-
 })
+
+let slideCode=slides.join(",")
 
 html=`<!DOCTYPE html>
 <html lang="ja">
@@ -214,6 +197,25 @@ justify-content:center;
 align-items:center;
 text-align:center;
 padding:30px;
+position:relative;
+}
+
+.dots{
+position:absolute;
+top:15px;
+display:flex;
+gap:6px;
+}
+
+.dot{
+width:6px;
+height:6px;
+border-radius:50%;
+background:#ccc;
+}
+
+.dot.active{
+background:black;
 }
 
 .book{
@@ -248,6 +250,8 @@ cursor:pointer;
 
 <div class="card">
 
+<div class="dots" id="dots"></div>
+
 <div id="text"></div>
 
 <div id="book" class="book">
@@ -277,12 +281,31 @@ let index=0
 
 const text=document.getElementById("text")
 const book=document.getElementById("book")
+const dots=document.getElementById("dots")
+
+scenes.forEach(()=>{
+const d=document.createElement("div")
+d.className="dot"
+dots.appendChild(d)
+})
+
+function updateDots(){
+
+const all=document.querySelectorAll(".dot")
+
+all.forEach((d,i)=>{
+d.classList.toggle("active",i===index)
+})
+
+}
 
 function showScene(){
 
 if(index < scenes.length){
 
 text.innerHTML=scenes[index]
+
+updateDots()
 
 index++
 
@@ -356,7 +379,6 @@ function clearForm(){
 document.querySelectorAll("input,textarea").forEach(el=>el.value="")
 
 document.getElementById("output").textContent=""
-
 document.getElementById("previewFrame").srcdoc=""
 
 html=""
