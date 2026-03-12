@@ -4,7 +4,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>読書リール生成ツール</title>
+<title>📚 読書リール生成ツール</title>
 
 <style>
 
@@ -59,6 +59,11 @@ overflow:auto;
 
 <h1>📚 読書リール生成ツール</h1>
 
+<label>Amazon URL</label>
+<input id="amazonURL">
+
+<button onclick="fetchAmazon()">Amazon情報取得</button>
+
 <label>タイトル</label>
 <input id="title">
 
@@ -92,6 +97,64 @@ overflow:auto;
 <script>
 
 let html=""
+
+/* Amazon URL解析 */
+
+function fetchAmazon(){
+
+const url=document.getElementById("amazonURL").value
+
+if(!url){
+alert("Amazon URLを入力してください")
+return
+}
+
+try{
+
+const decoded=decodeURIComponent(url)
+
+const slug=decoded.split("amazon.co.jp/")[1].split("/")[0]
+
+const parts=slug.split("-")
+
+let author=""
+let title=""
+
+if(parts.length>=2){
+
+author=parts.slice(-2).join(" ")
+
+}
+
+if(parts.length>2){
+
+title=parts.slice(0,parts.length-2).join(" ")
+
+}
+
+document.getElementById("title").value=title
+document.getElementById("author").value=author
+
+const asinMatch=url.match(/(?:dp|product)\/([A-Z0-9]{10})/)
+
+if(asinMatch){
+
+const asin=asinMatch[1]
+
+document.getElementById("image").value=
+"https://images-na.ssl-images-amazon.com/images/P/"+asin+".jpg"
+
+}
+
+}catch{
+
+alert("URL解析できませんでした")
+
+}
+
+}
+
+/* HTML生成 */
 
 function createHTML(){
 
@@ -140,184 +203,105 @@ align-items:center;
 height:100vh;
 }
 
-/* カード */
-
 .card{
-
 width:320px;
 height:480px;
-
 background:white;
-
 border-radius:18px;
-
 box-shadow:0 10px 30px rgba(0,0,0,0.15);
-
 display:flex;
 flex-direction:column;
 justify-content:center;
 align-items:center;
-
 text-align:center;
-
 padding:30px;
-
 box-sizing:border-box;
-
 position:relative;
-
 }
 
-/* ドット */
-
 .dots{
-
 position:absolute;
-
 top:14px;
-
 display:flex;
-
 gap:6px;
-
 }
 
 .dot{
-
 width:8px;
-
 height:8px;
-
 border-radius:50%;
-
 background:#ddd;
-
 }
 
 .dot.active{
-
 background:black;
-
 }
 
-/* テキスト */
-
 .text{
-
 font-size:20px;
-
 line-height:1.6;
-
 opacity:0;
-
 transform:translateY(10px);
-
 transition:.7s;
-
 }
 
 .text.show{
-
 opacity:1;
-
 transform:translateY(0);
-
 }
 
 .big{
-
 font-size:24px;
-
 font-weight:700;
-
 }
 
 .quote{
-
 font-size:18px;
-
 font-style:italic;
-
 }
 
-/* 書影 */
-
 .book{
-
 display:none;
-
 flex-direction:column;
-
 align-items:center;
-
 }
 
 .book img{
-
 width:150px;
-
 border-radius:6px;
-
 box-shadow:0 10px 25px rgba(0,0,0,0.2);
-
 }
 
 .title{
-
 margin-top:10px;
-
 font-weight:700;
-
 }
 
 .author{
-
 font-size:13px;
-
 opacity:.6;
-
 }
-
-/* ボタン */
 
 .button{
-
 margin-top:12px;
-
 padding:10px 18px;
-
 border-radius:20px;
-
 background:black;
-
 color:white;
-
 text-decoration:none;
-
 font-size:13px;
-
 font-weight:700;
-
 }
 
-/* 再生ボタン */
-
 .replay{
-
 margin-top:10px;
-
 font-size:13px;
-
 cursor:pointer;
-
 opacity:.7;
-
 }
 
 .replay:hover{
-
 opacity:1;
-
 }
 
 </style>
@@ -377,9 +361,7 @@ let interval
 scenes.forEach(()=>{
 
 const dot=document.createElement("div")
-
 dot.classList.add("dot")
-
 dotsContainer.appendChild(dot)
 
 })
@@ -431,7 +413,6 @@ clearInterval(interval)
 function restartReel(){
 
 index=0
-
 book.style.display="none"
 
 interval=setInterval(showScene,3000)
@@ -447,18 +428,21 @@ interval=setInterval(showScene,3000)
 <\/script>
 
 </body>
-
 </html>`
 
 document.getElementById("output").textContent=html
 
 }
 
+/* プレビュー */
+
 function previewHTML(){
 
 document.getElementById("previewFrame").srcdoc=html
 
 }
+
+/* ダウンロード */
 
 function downloadHTML(){
 
@@ -473,6 +457,8 @@ a.download="reel.html"
 a.click()
 
 }
+
+/* クリア */
 
 function clearForm(){
 
