@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>読書リール生成ツール</title>
+
+<style>
+
+body{
+
+font-family:sans-serif;
+background:#f5f5f5;
+padding:40px;
+max-width:700px;
+margin:auto;
+
+}
+
+h1{
+
+font-size:26px;
+margin-bottom:20px;
+
+}
+
+input,textarea{
+
+width:100%;
+padding:10px;
+margin-bottom:15px;
+border-radius:6px;
+border:1px solid #ccc;
+
+}
+
+button{
+
+padding:12px 20px;
+border:none;
+border-radius:8px;
+background:black;
+color:white;
+cursor:pointer;
+margin-right:10px;
+
+}
+
+pre{
+
+background:#111;
+color:#0f0;
+padding:20px;
+overflow:auto;
+margin-top:30px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>📚 読書リール生成ツール</h1>
+
+<label>タイトル</label>
+<input id="title">
+
+<label>著者</label>
+<input id="author">
+
+<label>書影URL</label>
+<input id="image">
+
+<label>記事URL（Notion）</label>
+<input id="article">
+
+<h3>スライド文章</h3>
+
+<textarea id="s1"></textarea>
+<textarea id="s2"></textarea>
+<textarea id="s3"></textarea>
+<textarea id="s4"></textarea>
+<textarea id="s5"></textarea>
+<textarea id="s6"></textarea>
+
+<button onclick="generate()">HTML生成</button>
+<button onclick="download()">HTMLダウンロード</button>
+
+<pre id="output"></pre>
+
+<script>
+
+function generate(){
+
+const title=document.getElementById("title").value
+const author=document.getElementById("author").value
+const image=document.getElementById("image").value
+const article=document.getElementById("article").value
+
+const slides=[
+
+document.getElementById("s1").value,
+document.getElementById("s2").value,
+document.getElementById("s3").value,
+document.getElementById("s4").value,
+document.getElementById("s5").value,
+document.getElementById("s6").value
+
+]
+
+let scenes=""
+
+slides.forEach(s=>{
+
+if(s.trim()!=""){
+
+scenes+=`\`<div>${s.replace(/\n/g,"<br>")}</div>\`,\n`
+
+}
+
+})
+
+const html=`<!DOCTYPE html>
+<html lang="ja">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+
+body{
+margin:0;
+background:#f4f4f4;
+font-family:'Zen Kaku Gothic New',sans-serif;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.card{
+
+width:320px;
+height:480px;
+background:white;
+border-radius:18px;
+box-shadow:0 10px 30px rgba(0,0,0,0.15);
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+text-align:center;
+padding:30px;
+position:relative;
+
+}
+
+.dots{
+
+position:absolute;
+top:14px;
+display:flex;
+gap:6px;
+
+}
+
+.dot{
+
+width:8px;
+height:8px;
+border-radius:50%;
+background:#ddd;
+
+}
+
+.dot.active{
+
+background:black;
+
+}
+
+.text{
+
+font-size:20px;
+line-height:1.6;
+opacity:0;
+transform:translateY(10px);
+transition:.7s;
+
+}
+
+.text.show{
+
+opacity:1;
+transform:translateY(0);
+
+}
+
+.book{
+
+display:none;
+flex-direction:column;
+align-items:center;
+
+}
+
+.book img{
+
+width:150px;
+border-radius:6px;
+box-shadow:0 10px 25px rgba(0,0,0,0.2);
+
+}
+
+.title{
+
+margin-top:10px;
+font-weight:700;
+
+}
+
+.author{
+
+font-size:13px;
+opacity:.6;
+
+}
+
+.button{
+
+margin-top:12px;
+padding:10px 18px;
+border-radius:20px;
+background:black;
+color:white;
+text-decoration:none;
+font-size:13px;
+font-weight:700;
+
+}
+
+.replay{
+
+margin-top:10px;
+font-size:13px;
+cursor:pointer;
+opacity:.7;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<div class="dots" id="dots"></div>
+
+<div id="text" class="text"></div>
+
+<div id="book" class="book">
+
+<img src="${image}">
+
+<div class="title">${title}</div>
+<div class="author">${author}</div>
+
+<a class="button" href="${article}" target="_blank">
+感想記事を読む
+</a>
+
+<div class="replay" onclick="restartReel()">
+▶ もう一度見る
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const scenes=[
+
+${scenes}
+
+]
+
+let index=0
+
+const text=document.getElementById("text")
+const book=document.getElementById("book")
+const dotsContainer=document.getElementById("dots")
+
+let interval
+
+scenes.forEach(()=>{
+
+const dot=document.createElement("div")
+dot.classList.add("dot")
+dotsContainer.appendChild(dot)
+
+})
+
+const dots=document.querySelectorAll(".dot")
+
+function updateDots(){
+
+dots.forEach((d,i)=>{
+
+d.classList.toggle("active",i<=index)
+
+})
+
+}
+
+function showScene(){
+
+if(index < scenes.length){
+
+book.style.display="none"
+text.style.display="block"
+
+text.classList.remove("show")
+
+setTimeout(()=>{
+
+text.innerHTML=scenes[index]
+text.classList.add("show")
+
+updateDots()
+
+index++
+
+},200)
+
+}else{
+
+text.style.display="none"
+book.style.display="flex"
+
+clearInterval(interval)
+
+}
+
+}
+
+function restartReel(){
+
+index=0
+book.style.display="none"
+
+interval=setInterval(showScene,3000)
+showScene()
+
+}
+
+showScene()
+interval=setInterval(showScene,3000)
+
+</script>
+
+</body>
+</html>`
+
+document.getElementById("output").textContent=html
+
+}
+
+function download(){
+
+const text=document.getElementById("output").textContent
+
+const blob=new Blob([text],{type:"text/html"})
+
+const a=document.createElement("a")
+
+a.href=URL.createObjectURL(blob)
+
+a.download="reel.html"
+
+a.click()
+
+}
+
+</script>
+
+</body>
+</html>
