@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
 
 <meta charset="UTF-8">
-<title>📚 読書リール生成ツール</title>
+<title>読書リール生成ツール</title>
 
 <style>
 
@@ -24,7 +25,7 @@ border:1px solid #ccc;
 }
 
 button{
-padding:12px 18px;
+padding:10px 16px;
 border:none;
 border-radius:8px;
 background:black;
@@ -34,21 +35,20 @@ margin-right:10px;
 margin-bottom:10px;
 }
 
+iframe{
+width:340px;
+height:520px;
+border:none;
+margin-top:20px;
+box-shadow:0 10px 30px rgba(0,0,0,0.2);
+border-radius:16px;
+}
+
 pre{
 background:#111;
 color:#0f0;
 padding:20px;
 overflow:auto;
-margin-top:20px;
-}
-
-iframe{
-width:320px;
-height:480px;
-border:none;
-margin-top:20px;
-box-shadow:0 10px 30px rgba(0,0,0,0.2);
-border-radius:16px;
 }
 
 </style>
@@ -59,11 +59,6 @@ border-radius:16px;
 
 <h1>📚 読書リール生成ツール</h1>
 
-<label>Amazon URL</label>
-<input id="amazonURL">
-
-<button onclick="fetchAmazon()">Amazon情報取得</button>
-
 <label>タイトル</label>
 <input id="title">
 
@@ -73,7 +68,7 @@ border-radius:16px;
 <label>書影URL</label>
 <input id="image">
 
-<label>記事URL（Notionなど）</label>
+<label>記事URL</label>
 <input id="article">
 
 <h3>スライド文章</h3>
@@ -98,56 +93,6 @@ border-radius:16px;
 
 let html=""
 
-function fetchAmazon(){
-
-const url=document.getElementById("amazonURL").value
-
-if(!url){
-alert("Amazon URLを入力してください")
-return
-}
-
-const decoded=decodeURIComponent(url)
-
-let slug=""
-
-try{
-slug=decoded.split("amazon.co.jp/")[1].split("/")[0]
-}catch{
-alert("URL解析できません")
-return
-}
-
-const parts=slug.split("-")
-
-let author=""
-if(parts.length>=2){
-author=parts.slice(-2).join(" ")
-}
-
-let title=""
-if(parts.length>2){
-title=parts.slice(0,parts.length-2).join(" ")
-}
-
-const asinMatch=url.match(/(?:dp|product)\/([A-Z0-9]{10})/)
-
-let imageURL=""
-
-if(asinMatch){
-const asin=asinMatch[1]
-imageURL=`https://images-na.ssl-images-amazon.com/images/P/${asin}.jpg`
-}
-
-document.getElementById("title").value=title
-document.getElementById("author").value=author
-
-if(imageURL){
-document.getElementById("image").value=imageURL
-}
-
-}
-
 function createHTML(){
 
 const title=document.getElementById("title").value
@@ -155,91 +100,224 @@ const author=document.getElementById("author").value
 const image=document.getElementById("image").value
 const article=document.getElementById("article").value
 
-const slideInputs=document.querySelectorAll(".slide")
+const slides=document.querySelectorAll(".slide")
 
-let slides=[]
+let scenes=[]
 
-slideInputs.forEach(s=>{
+slides.forEach(s=>{
+
 if(s.value.trim()!==""){
-slides.push("`"+s.value.replace(/\n/g,"<br>").replace(/`/g,"") +"`")
+
+scenes.push("`"+s.value.replace(/\n/g,"<br>").replace(/`/g,"")+"`")
+
 }
+
 })
 
-let slideCode=slides.join(",")
+const sceneText=scenes.join(",\n")
 
 html=`<!DOCTYPE html>
 <html lang="ja">
+
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>${title}</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
 
 body{
 margin:0;
 background:#f4f4f4;
-font-family:sans-serif;
+font-family:'Zen Kaku Gothic New',sans-serif;
 display:flex;
 justify-content:center;
 align-items:center;
 height:100vh;
 }
 
+/* カード */
+
 .card{
+
 width:320px;
 height:480px;
+
 background:white;
+
 border-radius:18px;
+
 box-shadow:0 10px 30px rgba(0,0,0,0.15);
+
 display:flex;
 flex-direction:column;
 justify-content:center;
 align-items:center;
+
 text-align:center;
+
 padding:30px;
+
+box-sizing:border-box;
+
 position:relative;
+
 }
 
+/* ドット */
+
 .dots{
+
 position:absolute;
-top:15px;
+
+top:14px;
+
 display:flex;
+
 gap:6px;
+
 }
 
 .dot{
-width:6px;
-height:6px;
+
+width:8px;
+
+height:8px;
+
 border-radius:50%;
-background:#ccc;
+
+background:#ddd;
+
 }
 
 .dot.active{
+
 background:black;
+
 }
 
+/* テキスト */
+
+.text{
+
+font-size:20px;
+
+line-height:1.6;
+
+opacity:0;
+
+transform:translateY(10px);
+
+transition:.7s;
+
+}
+
+.text.show{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+.big{
+
+font-size:24px;
+
+font-weight:700;
+
+}
+
+.quote{
+
+font-size:18px;
+
+font-style:italic;
+
+}
+
+/* 書影 */
+
 .book{
+
 display:none;
+
 flex-direction:column;
+
 align-items:center;
+
 }
 
 .book img{
+
 width:150px;
+
+border-radius:6px;
+
+box-shadow:0 10px 25px rgba(0,0,0,0.2);
+
 }
+
+.title{
+
+margin-top:10px;
+
+font-weight:700;
+
+}
+
+.author{
+
+font-size:13px;
+
+opacity:.6;
+
+}
+
+/* ボタン */
 
 .button{
-margin-top:10px;
+
+margin-top:12px;
+
 padding:10px 18px;
+
 border-radius:20px;
+
 background:black;
+
 color:white;
+
 text-decoration:none;
+
+font-size:13px;
+
+font-weight:700;
+
 }
 
+/* 再生ボタン */
+
 .replay{
+
 margin-top:10px;
+
+font-size:13px;
+
 cursor:pointer;
+
+opacity:.7;
+
+}
+
+.replay:hover{
+
+opacity:1;
+
 }
 
 </style>
@@ -252,21 +330,28 @@ cursor:pointer;
 
 <div class="dots" id="dots"></div>
 
-<div id="text"></div>
+<div id="text" class="text"></div>
 
 <div id="book" class="book">
 
 <img src="${image}">
 
-<div>${title}</div>
-<div>${author}</div>
+<div class="title">${title}</div>
 
-<a class="button" href="${article}" target="_blank">
+<div class="author">${author}</div>
+
+<a class="button"
+href="${article}"
+target="_blank">
+
 感想記事を読む
+
 </a>
 
 <div class="replay" onclick="restartReel()">
+
 ▶ もう一度見る
+
 </div>
 
 </div>
@@ -275,26 +360,38 @@ cursor:pointer;
 
 <script>
 
-const scenes=[${slideCode}]
+const scenes=[
+
+${sceneText}
+
+]
 
 let index=0
 
 const text=document.getElementById("text")
 const book=document.getElementById("book")
-const dots=document.getElementById("dots")
+const dotsContainer=document.getElementById("dots")
+
+let interval
 
 scenes.forEach(()=>{
-const d=document.createElement("div")
-d.className="dot"
-dots.appendChild(d)
+
+const dot=document.createElement("div")
+
+dot.classList.add("dot")
+
+dotsContainer.appendChild(dot)
+
 })
+
+const dots=document.querySelectorAll(".dot")
 
 function updateDots(){
 
-const all=document.querySelectorAll(".dot")
+dots.forEach((d,i)=>{
 
-all.forEach((d,i)=>{
-d.classList.toggle("active",i===index)
+d.classList.toggle("active",i<=index)
+
 })
 
 }
@@ -303,18 +400,29 @@ function showScene(){
 
 if(index < scenes.length){
 
+book.style.display="none"
+text.style.display="block"
+
+text.classList.remove("show")
+
+setTimeout(()=>{
+
 text.innerHTML=scenes[index]
+
+text.classList.add("show")
 
 updateDots()
 
 index++
+
+},200)
 
 }else{
 
 text.style.display="none"
 book.style.display="flex"
 
-clearInterval(timer)
+clearInterval(interval)
 
 }
 
@@ -323,21 +431,23 @@ clearInterval(timer)
 function restartReel(){
 
 index=0
-book.style.display="none"
-text.style.display="block"
 
-timer=setInterval(showScene,3000)
+book.style.display="none"
+
+interval=setInterval(showScene,3000)
+
 showScene()
 
 }
 
-let timer=setInterval(showScene,3000)
-
 showScene()
+
+interval=setInterval(showScene,3000)
 
 <\/script>
 
 </body>
+
 </html>`
 
 document.getElementById("output").textContent=html
@@ -346,21 +456,11 @@ document.getElementById("output").textContent=html
 
 function previewHTML(){
 
-if(html===""){
-alert("先にHTML作成を押してください")
-return
-}
-
 document.getElementById("previewFrame").srcdoc=html
 
 }
 
 function downloadHTML(){
-
-if(html===""){
-alert("先にHTML作成を押してください")
-return
-}
 
 const blob=new Blob([html],{type:"text/html"})
 
