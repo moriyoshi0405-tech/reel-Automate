@@ -10,7 +10,7 @@
 body{
 font-family:sans-serif;
 background:#f4f4f4;
-max-width:700px;
+max-width:900px;
 margin:auto;
 padding:40px;
 }
@@ -31,6 +31,7 @@ background:black;
 color:white;
 cursor:pointer;
 margin-right:10px;
+margin-bottom:10px;
 }
 
 pre{
@@ -41,6 +42,15 @@ overflow:auto;
 margin-top:20px;
 }
 
+iframe{
+width:320px;
+height:480px;
+border:none;
+margin-top:20px;
+box-shadow:0 10px 30px rgba(0,0,0,0.2);
+border-radius:16px;
+}
+
 </style>
 
 </head>
@@ -48,6 +58,11 @@ margin-top:20px;
 <body>
 
 <h1>📚 読書リール生成ツール</h1>
+
+<label>Amazon URL</label>
+<input id="amazonURL">
+
+<button onclick="fetchAmazon()">Amazon情報取得</button>
 
 <label>タイトル</label>
 <input id="title">
@@ -70,16 +85,70 @@ margin-top:20px;
 <textarea id="s5"></textarea>
 <textarea id="s6"></textarea>
 
-<button id="createBtn">HTML作成</button>
-<button id="downloadBtn">ダウンロード</button>
+<button onclick="createHTML()">HTML作成</button>
+<button onclick="downloadHTML()">HTMLダウンロード</button>
+<button onclick="previewHTML()">プレビュー</button>
+<button onclick="clearForm()">入力クリア</button>
 
 <pre id="output"></pre>
 
+<iframe id="previewFrame"></iframe>
+
 <script>
 
-let generatedHTML=""
+let html=""
 
-document.getElementById("createBtn").addEventListener("click", function(){
+async function fetchAmazon(){
+
+const url=document.getElementById("amazonURL").value
+
+if(!url){
+alert("Amazon URLを入力してください")
+return
+}
+
+const asinMatch=url.match(/(?:dp|product)\/([A-Z0-9]{10})/)
+
+if(!asinMatch){
+alert("ASINが取得できませんでした")
+return
+}
+
+const asin=asinMatch[1]
+
+const imageURL=`https://images-na.ssl-images-amazon.com/images/P/${asin}.jpg`
+
+document.getElementById("image").value=imageURL
+
+try{
+
+const proxy="https://api.allorigins.win/raw?url="+encodeURIComponent(url)
+
+const res=await fetch(proxy)
+
+const htmlText=await res.text()
+
+const parser=new DOMParser()
+
+const doc=parser.parseFromString(htmlText,"text/html")
+
+const title=doc.querySelector("#productTitle")?.innerText.trim()
+
+const author=doc.querySelector(".author a")?.innerText.trim()
+
+if(title) document.getElementById("title").value=title
+
+if(author) document.getElementById("author").value=author
+
+}catch(e){
+
+console.log("タイトル取得失敗")
+
+}
+
+}
+
+function createHTML(){
 
 const title=document.getElementById("title").value
 const author=document.getElementById("author").value
@@ -87,14 +156,12 @@ const image=document.getElementById("image").value
 const article=document.getElementById("article").value
 
 const slides=[
-
 document.getElementById("s1").value,
 document.getElementById("s2").value,
 document.getElementById("s3").value,
 document.getElementById("s4").value,
 document.getElementById("s5").value,
 document.getElementById("s6").value
-
 ]
 
 let slideCode=""
@@ -103,27 +170,24 @@ slides.forEach(function(s){
 
 if(s.trim()!=""){
 
-slideCode += `"<div>${s.replace(/\n/g,"<br>")}</div>",`
+slideCode+=`"<div>${s.replace(/\n/g,"<br>")}</div>",`
 
 }
 
 })
 
-generatedHTML = `<!DOCTYPE html>
+html=`<!DOCTYPE html>
 <html lang="ja">
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
 
 <style>
 
 body{
 margin:0;
 background:#f4f4f4;
-font-family:'Zen Kaku Gothic New',sans-serif;
+font-family:sans-serif;
 display:flex;
 justify-content:center;
 align-items:center;
@@ -144,11 +208,6 @@ text-align:center;
 padding:30px;
 }
 
-.text{
-font-size:20px;
-line-height:1.6;
-}
-
 .book{
 display:none;
 flex-direction:column;
@@ -157,7 +216,6 @@ align-items:center;
 
 .book img{
 width:150px;
-border-radius:6px;
 }
 
 .button{
@@ -182,7 +240,7 @@ cursor:pointer;
 
 <div class="card">
 
-<div id="text" class="text"></div>
+<div id="text"></div>
 
 <div id="book" class="book">
 
@@ -243,6 +301,7 @@ showScene()
 }
 
 let timer=setInterval(showScene,3000)
+
 showScene()
 
 <\/script>
@@ -250,21 +309,20 @@ showScene()
 </body>
 </html>`
 
-document.getElementById("output").textContent=generatedHTML
+document.getElementById("output").textContent=html
 
-})
+}
 
-document.getElementById("downloadBtn").addEventListener("click", function(){
+function downloadHTML(){
 
-if(generatedHTML===""){
+if(html===""){
 
 alert("先にHTML作成を押してください")
-
 return
 
 }
 
-const blob=new Blob([generatedHTML],{type:"text/html"})
+const blob=new Blob([html],{type:"text/html"})
 
 const a=document.createElement("a")
 
@@ -274,7 +332,32 @@ a.download="reel.html"
 
 a.click()
 
-})
+}
+
+function previewHTML(){
+
+if(html===""){
+
+alert("先にHTML作成を押してください")
+return
+
+}
+
+document.getElementById("previewFrame").srcdoc=html
+
+}
+
+function clearForm(){
+
+document.querySelectorAll("input,textarea").forEach(el=>el.value="")
+
+document.getElementById("output").textContent=""
+
+document.getElementById("previewFrame").srcdoc=""
+
+html=""
+
+}
 
 </script>
 
