@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>読書リール生成ツール</title>
+<title>📚 読書リール生成ツール</title>
 
 <style>
 
@@ -15,22 +15,15 @@ margin:auto;
 padding:40px;
 }
 
-h1{
-margin-bottom:20px;
-}
-
 input,textarea{
-
 width:100%;
 padding:10px;
 margin-bottom:15px;
 border-radius:6px;
 border:1px solid #ccc;
-
 }
 
 button{
-
 padding:12px 18px;
 border:none;
 border-radius:8px;
@@ -38,17 +31,14 @@ background:black;
 color:white;
 cursor:pointer;
 margin-right:10px;
-
 }
 
 pre{
-
 background:#111;
 color:#0f0;
 padding:20px;
 overflow:auto;
 margin-top:20px;
-
 }
 
 </style>
@@ -80,14 +70,16 @@ margin-top:20px;
 <textarea id="s5"></textarea>
 <textarea id="s6"></textarea>
 
-<button onclick="generateHTML()">HTML作成</button>
-<button onclick="downloadHTML()">ダウンロード</button>
+<button id="createBtn">HTML作成</button>
+<button id="downloadBtn">ダウンロード</button>
 
 <pre id="output"></pre>
 
 <script>
 
-function generateHTML(){
+let generatedHTML=""
+
+document.getElementById("createBtn").addEventListener("click", function(){
 
 const title=document.getElementById("title").value
 const author=document.getElementById("author").value
@@ -111,15 +103,16 @@ slides.forEach(function(s){
 
 if(s.trim()!=""){
 
-slideCode+=`"<div>${s.replace(/\n/g,"<br>")}</div>",`
+slideCode += `"<div>${s.replace(/\n/g,"<br>")}</div>",`
 
 }
 
 })
 
-const html=`<!DOCTYPE html>
+generatedHTML = `<!DOCTYPE html>
 <html lang="ja">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -149,7 +142,6 @@ justify-content:center;
 align-items:center;
 text-align:center;
 padding:30px;
-position:relative;
 }
 
 .text{
@@ -253,25 +245,26 @@ showScene()
 let timer=setInterval(showScene,3000)
 showScene()
 
-</script>
+<\/script>
 
 </body>
 </html>`
 
-document.getElementById("output").textContent=html
+document.getElementById("output").textContent=generatedHTML
 
-}
+})
 
-function downloadHTML(){
+document.getElementById("downloadBtn").addEventListener("click", function(){
 
-const code=document.getElementById("output").textContent
+if(generatedHTML===""){
 
-if(code===""){
 alert("先にHTML作成を押してください")
+
 return
+
 }
 
-const blob=new Blob([code],{type:"text/html"})
+const blob=new Blob([generatedHTML],{type:"text/html"})
 
 const a=document.createElement("a")
 
@@ -281,7 +274,7 @@ a.download="reel.html"
 
 a.click()
 
-}
+})
 
 </script>
 
