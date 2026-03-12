@@ -73,7 +73,7 @@ border-radius:16px;
 <label>書影URL</label>
 <input id="image">
 
-<label>記事URL</label>
+<label>記事URL（Notion）</label>
 <input id="article">
 
 <h3>スライド文章</h3>
@@ -98,7 +98,7 @@ border-radius:16px;
 
 let html=""
 
-async function fetchAmazon(){
+function fetchAmazon(){
 
 const url=document.getElementById("amazonURL").value
 
@@ -107,43 +107,51 @@ alert("Amazon URLを入力してください")
 return
 }
 
-const asinMatch=url.match(/(?:dp|product)\/([A-Z0-9]{10})/)
+// URLデコード
+const decoded=decodeURIComponent(url)
 
-if(!asinMatch){
-alert("ASINが取得できませんでした")
+// スラッグ取得
+let slug=""
+
+try{
+slug=decoded.split("amazon.co.jp/")[1].split("/")[0]
+}catch{
+alert("URL解析できません")
 return
 }
 
+const parts=slug.split("-")
+
+// 著者推定
+let author=""
+if(parts.length>=2){
+author=parts.slice(-2).join(" ")
+}
+
+// タイトル推定
+let title=""
+if(parts.length>2){
+title=parts.slice(0,parts.length-2).join(" ")
+}
+
+// ASIN取得
+const asinMatch=url.match(/(?:dp|product)\/([A-Z0-9]{10})/)
+
+let imageURL=""
+
+if(asinMatch){
+
 const asin=asinMatch[1]
 
-const imageURL=`https://images-na.ssl-images-amazon.com/images/P/${asin}.jpg`
+imageURL=`https://images-na.ssl-images-amazon.com/images/P/${asin}.jpg`
 
+}
+
+document.getElementById("title").value=title
+document.getElementById("author").value=author
+
+if(imageURL){
 document.getElementById("image").value=imageURL
-
-try{
-
-const proxy="https://api.allorigins.win/raw?url="+encodeURIComponent(url)
-
-const res=await fetch(proxy)
-
-const htmlText=await res.text()
-
-const parser=new DOMParser()
-
-const doc=parser.parseFromString(htmlText,"text/html")
-
-const title=doc.querySelector("#productTitle")?.innerText.trim()
-
-const author=doc.querySelector(".author a")?.innerText.trim()
-
-if(title) document.getElementById("title").value=title
-
-if(author) document.getElementById("author").value=author
-
-}catch(e){
-
-console.log("タイトル取得失敗")
-
 }
 
 }
@@ -316,10 +324,8 @@ document.getElementById("output").textContent=html
 function downloadHTML(){
 
 if(html===""){
-
 alert("先にHTML作成を押してください")
 return
-
 }
 
 const blob=new Blob([html],{type:"text/html"})
@@ -337,10 +343,8 @@ a.click()
 function previewHTML(){
 
 if(html===""){
-
 alert("先にHTML作成を押してください")
 return
-
 }
 
 document.getElementById("previewFrame").srcdoc=html
