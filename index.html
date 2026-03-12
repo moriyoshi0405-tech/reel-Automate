@@ -161,7 +161,7 @@ let slides=[]
 
 slideInputs.forEach(s=>{
 if(s.value.trim()!==""){
-slides.push(`<div>${s.value.replace(/\n/g,"<br>")}</div>`)
+slides.push("`"+s.value.replace(/\n/g,"<br>").replace(/`/g,"") +"`")
 }
 })
 
