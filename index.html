@@ -3,7 +3,7 @@
 <head>
 
 <meta charset="UTF-8">
-<title>読書リール生成ツール</title>
+<title>📚 読書リール生成ツール</title>
 
 <style>
 
@@ -73,7 +73,7 @@ border-radius:16px;
 <label>書影URL</label>
 <input id="image">
 
-<label>記事URL</label>
+<label>記事URL（Notionなど）</label>
 <input id="article">
 
 <h3>スライド文章</h3>
@@ -86,8 +86,8 @@ border-radius:16px;
 <textarea class="slide"></textarea>
 
 <button onclick="createHTML()">HTML作成</button>
-<button onclick="downloadHTML()">HTMLダウンロード</button>
 <button onclick="previewHTML()">プレビュー</button>
+<button onclick="downloadHTML()">HTMLダウンロード</button>
 <button onclick="clearForm()">入力クリア</button>
 
 <pre id="output"></pre>
@@ -344,6 +344,17 @@ document.getElementById("output").textContent=html
 
 }
 
+function previewHTML(){
+
+if(html===""){
+alert("先にHTML作成を押してください")
+return
+}
+
+document.getElementById("previewFrame").srcdoc=html
+
+}
+
 function downloadHTML(){
 
 if(html===""){
@@ -360,17 +371,6 @@ a.href=URL.createObjectURL(blob)
 a.download="reel.html"
 
 a.click()
-
-}
-
-function previewHTML(){
-
-if(html===""){
-alert("先にHTML作成を押してください")
-return
-}
-
-document.getElementById("previewFrame").srcdoc=html
 
 }
 
