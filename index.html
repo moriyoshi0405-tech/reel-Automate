@@ -167,16 +167,41 @@ const slides=document.querySelectorAll(".slide")
 
 let scenes=[]
 
-slides.forEach(s=>{
+slides.forEach((s,i)=>{
 
-if(s.value.trim()!==""){
+let text=s.value.trim()
 
-scenes.push("`"+s.value.replace(/\n/g,"<br>").replace(/`/g,"")+"`")
+if(text==="") return
+
+text=text.replace(/\n/g,"<br>").replace(/`/g,"")
+
+/* 1枚目と最後はbig */
+
+if(i===0){
+
+text=`<div class="big">${text}</div>`
 
 }
 
-})
+/* 引用 */
 
+else if(text.startsWith("「")){
+
+text=`<div class="quote">${text}</div>`
+
+}
+
+/* 最後 */
+
+else if(i===slides.length-1){
+
+text=`<div class="big">${text}</div>`
+
+}
+
+scenes.push("`"+text+"`")
+
+})
 const sceneText=scenes.join(",\n")
 
 html=`<!DOCTYPE html>
